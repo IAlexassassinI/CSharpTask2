@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CSharpTask2.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -23,13 +24,25 @@ namespace CSharpTask1.Models
         December
     }
 
+    
+
     public class DateCalculator
     {
+        static private readonly int THREAD_SLEEP_TIME = 10000; // Simulate a delay
+
         public static int CalculateAge(DateTime birthDate)
         {
             int age = DateTime.Now.Year - birthDate.Year;
             if (birthDate.Date > DateTime.Now.AddYears(-age)) age--;
             return age;
+        }
+
+        public static Task<int> CalculateAgeAsync(DateTime birthDate)
+        {
+            return Task.Run(() => {
+                Thread.Sleep(THREAD_SLEEP_TIME); // Simulate a delay
+                return CalculateAge(birthDate);
+            });
         }
 
         public static string GetWesternZodiac(DateTime birthDate)
@@ -64,8 +77,16 @@ namespace CSharpTask1.Models
                 case Month.December:
                     return (day <= 21) ? "Sagittarius" : "Capricorn";
                 default:
-                    return "Unknown";
+                    throw new NoWesternSignException();
             }
+        }
+
+        public static Task<string> GetWesternZodiacAsync(DateTime birthDate)
+        {
+            return Task.Run(() => {
+                Thread.Sleep(THREAD_SLEEP_TIME); // Simulate a delay
+                return GetWesternZodiac(birthDate);
+            });
         }
 
         static private readonly string[] _animals = { "Rat", "Ox", "Tiger", "Rabbit", "Dragon", "Snake", "Horse", "Goat", "Monkey", "Rooster", "Dog", "Pig" };
@@ -81,9 +102,25 @@ namespace CSharpTask1.Models
             return $"{_elements[element_index]} {_animals[animal_index]} ({_harm[harm_index]})";
         }
 
+        public static Task<string> GetChineseZodiacAsync(DateTime birthDate)
+        {
+            return Task.Run(() => {
+                Thread.Sleep(THREAD_SLEEP_TIME); // Simulate a delay
+                return GetChineseZodiac(birthDate);
+            });
+        }
+
         public static bool IsTodayBirthday(DateTime BirthDate) 
         {
             return BirthDate.Day == DateTime.Now.Day && BirthDate.Month == DateTime.Now.Month;
+        }
+
+        public static Task<bool> IsTodayBirthdayAsync(DateTime birthDate)
+        {
+            return Task.Run(() => {
+                Thread.Sleep(THREAD_SLEEP_TIME); // Simulate a delay
+                return IsTodayBirthday(birthDate);
+            });
         }
     }
 }

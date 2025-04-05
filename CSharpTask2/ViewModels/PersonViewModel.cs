@@ -11,6 +11,7 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.Input;
 using System.Diagnostics;
+using CSharpTask2.Exceptions;
 
 namespace CSharpTask1.ViewModels
 {
@@ -89,25 +90,7 @@ namespace CSharpTask1.ViewModels
                                                        
         }
 
-        private const int MAX_AGE = 135;
-
-        private bool CheckAge(int age)
-        {
-            if (age < 0)
-            {
-                MessageBox.Show("You are not born yet", "Date entered incorrectly", MessageBoxButton.OK, MessageBoxImage.Error);
-                return false;
-            }
-
-            if (age > MAX_AGE)
-            {
-                MessageBox.Show("You are too old for this program :(", "Date entered incorrectly", MessageBoxButton.OK, MessageBoxImage.Error);
-                return false;
-            }
-
-            return true;
-        }
-
+        
         Person _personData;
 
         private async Task ProcessData()
@@ -115,22 +98,35 @@ namespace CSharpTask1.ViewModels
             
             IsProcessing = true;
 
-            if (!CheckAge(DateCalculator.CalculateAge(BirthDate))) 
+            try
+            {
+                _personData = new Person(Name, Surname, Email, BirthDate);
+
+                await _personData.CalculatePropertiesAsync();
+                ResultText = _personData.ToString();
+
+                if (_personData.IsBirthday)
+                {
+                    MessageBox.Show("Happy birthday!", "Congratulation", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+
+            }
+            catch (NotBornException ex)
+            {
+                MessageBox.Show("You are not born yet", "Date entered incorrectly", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (TooOldException ex)
+            {
+                MessageBox.Show("You are too old for this program :(", "Date entered incorrectly", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (InvalidEmailFormatException ex)
+            {
+                MessageBox.Show(ex.Message, "Date entered incorrectly", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
             {
                 IsProcessing = false;
-                return;
             }
-
-            _personData = new Person(Name, Surname, Email, BirthDate);
-            await _personData.CalculatePropertiesAsync();
-            ResultText = _personData.ToString();
-
-            if (_personData.IsBirthday) 
-            {
-                MessageBox.Show("Happy birthday!", "Congratulation", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-
-            IsProcessing = false;
         }
 
         private void UpdateCanExecute()

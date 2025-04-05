@@ -1,8 +1,10 @@
-﻿using System;
+﻿using CSharpTask2.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace CSharpTask1.Models
@@ -19,9 +21,23 @@ namespace CSharpTask1.Models
         public string Surname => _surname;
         public string Email => _email;
         public DateTime BirthDate => _birthDate;
+        private const int MAX_AGE = 135;
 
         public Person(string name, string surname, string email, DateTime birthDate)
         {
+            if (birthDate > DateTime.Now){
+                throw new NotBornException();
+            }
+
+            if (birthDate < DateTime.Now.AddYears(-MAX_AGE))
+            {
+                throw new TooOldException();
+            }
+
+            if (!IsValidEmail(email)) { 
+                throw new InvalidEmailFormatException();
+            }
+
             _name = name;
             _surname = surname;
             _email = email;
@@ -40,22 +56,30 @@ namespace CSharpTask1.Models
         private string _chineseSign;
         private bool _isBirthday;
 
-        private int _yearsOld;
-
         public bool IsAdult => _isAdult;
         public string SunSign => _sunSign;
         public string ChineseSign => _chineseSign;
         public bool IsBirthday => _isBirthday;
 
         private const int ADULT_AGE = 18;
+
         public async Task CalculatePropertiesAsync()
         {
-            await Task.Delay(5000);
-            _yearsOld = DateCalculator.CalculateAge(_birthDate);
-            _isAdult = _yearsOld >= ADULT_AGE; 
-            _sunSign = DateCalculator.GetWesternZodiac(_birthDate);
-            _chineseSign = DateCalculator.GetChineseZodiac(_birthDate);
-            _isBirthday = DateCalculator.IsTodayBirthday(_birthDate);
+            //here more async code
+            var yearsOldTask = DateCalculator.CalculateAgeAsync(_birthDate);
+            var sunSignTask = DateCalculator.GetWesternZodiacAsync(_birthDate);
+            var chineseSignTask = DateCalculator.GetChineseZodiacAsync(_birthDate);
+            var isBirthdayTask = DateCalculator.IsTodayBirthdayAsync(_birthDate);
+
+            _isAdult = await yearsOldTask >= ADULT_AGE;
+            _sunSign = await sunSignTask;
+            _chineseSign = await chineseSignTask;
+            _isBirthday = await isBirthdayTask;
+        }
+
+        private bool IsValidEmail(string email)
+        {
+            return Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$");
         }
 
         public override string ToString()
