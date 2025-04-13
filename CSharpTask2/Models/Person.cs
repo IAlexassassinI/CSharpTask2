@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -17,11 +19,44 @@ namespace CSharpTask1.Models
         private string _email;
         private DateTime _birthDate;
 
-        public string Name => _name;
-        public string Surname => _surname;
-        public string Email => _email;
-        public DateTime BirthDate => _birthDate;
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                _name = value;
+            }
+        }
+
+        public string Surname
+        {
+            get => _surname;
+            set
+            {
+                _surname = value;
+            }
+        }
+
+        public string Email
+        {
+            get => _email;
+            set
+            {
+                _email = value;
+            }
+        }
+
+        public DateTime BirthDate
+        {
+            get => _birthDate;
+            set
+            {
+                _birthDate = value;
+            }
+        }
         private const int MAX_AGE = 135;
+
+        private Person() { }
 
         public Person(string name, string surname, string email, DateTime birthDate)
         {
@@ -56,10 +91,34 @@ namespace CSharpTask1.Models
         private string _chineseSign;
         private bool _isBirthday;
 
-        public bool IsAdult => _isAdult;
-        public string SunSign => _sunSign;
-        public string ChineseSign => _chineseSign;
-        public bool IsBirthday => _isBirthday;
+        public bool IsAdult
+        {
+            get => _isAdult;
+            private set { 
+                _isAdult = value;
+            }
+        }
+        public string SunSign
+        {
+            get => _sunSign;
+            private set { 
+                _sunSign = value; 
+            }
+        }
+        public string ChineseSign
+        {
+            get => _chineseSign;
+            private set { 
+                _chineseSign = value;
+            }
+        }
+        public bool IsBirthday
+        {
+            get => _isBirthday;
+            private set { 
+                _isBirthday = value; 
+            }
+        }
 
         private const int ADULT_AGE = 18;
 
@@ -93,6 +152,48 @@ namespace CSharpTask1.Models
                    $"Chinese zodiac sign: {ChineseSign}\n" +
                    $"Is today birthday: {IsBirthday}";
         }
+
+
+        public class PersonConverter : JsonConverter<Person>
+        {
+            public override Person Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+            {                
+                var jsonObject = JsonDocument.ParseValue(ref reader).RootElement;
+                var person = new Person();
+                
+                person.Name = jsonObject.GetProperty("Name").GetString();
+                person.Surname = jsonObject.GetProperty("Surname").GetString();
+                person.Email = jsonObject.GetProperty("Email").GetString();
+                person.BirthDate = jsonObject.GetProperty("BirthDate").GetDateTime();
+
+                // i decided to serialize and deserialize all fields
+                person.IsAdult = jsonObject.GetProperty("IsAdult").GetBoolean();
+                person.SunSign = jsonObject.GetProperty("SunSign").GetString();
+                person.ChineseSign = jsonObject.GetProperty("ChineseSign").GetString();
+                person.IsBirthday = jsonObject.GetProperty("IsBirthday").GetBoolean();
+
+                return person;
+            }
+
+            public override void Write(Utf8JsonWriter writer, Person value, JsonSerializerOptions options)
+            {
+                writer.WriteStartObject();
+
+                writer.WriteString("Name", value.Name);
+                writer.WriteString("Surname", value.Surname);
+                writer.WriteString("Email", value.Email);
+                writer.WriteString("BirthDate", value.BirthDate);
+
+                // i decided to serialize and deserialize all fields
+                writer.WriteBoolean("IsAdult", value.IsAdult);
+                writer.WriteString("SunSign", value.SunSign);
+                writer.WriteString("ChineseSign", value.ChineseSign);
+                writer.WriteBoolean("IsBirthday", value.IsBirthday);
+
+                writer.WriteEndObject();
+            }
+        }
+
 
     }
 }

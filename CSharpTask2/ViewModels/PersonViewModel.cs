@@ -68,13 +68,39 @@ namespace CSharpTask1.ViewModels
         }
 
         public RelayCommand ProceedCommand { get; }
+        public RelayCommand CancelCommand { get; }
         public RelayCommand DebugCommand { get; }
 
-        public PersonViewModel()
+        private Window? _linked_window = null;
+
+        public PersonViewModel(Person? person = null, Window? window = null) //need to input window to make it dialog 
         {
+            _linked_window = window;
+            
             IsProcessing = false;
             ProceedCommand = new RelayCommand(async () => await ProcessData(), ValidateFields);
+            CancelCommand = new RelayCommand(DoCancel, () => true);
             DebugCommand = new RelayCommand(DebugTest, () => true);
+
+            if (person != null)
+            {
+                Name = person.Name;
+                Surname = person.Surname;
+                Email = person.Email;
+                BirthDate = person.BirthDate;
+            }
+        }
+
+        public Person PersonData => _personData;
+        public bool HasValidPerson => _personData != null;
+
+        private void DoCancel()
+        {
+            if (_linked_window != null)
+            {
+                _linked_window.DialogResult = false;
+                _linked_window.Close();
+            }
         }
 
         private void DebugTest() 
@@ -91,7 +117,7 @@ namespace CSharpTask1.ViewModels
         }
 
         
-        Person _personData;
+        private Person? _personData = null;
 
         private async Task ProcessData()
         {
@@ -100,9 +126,11 @@ namespace CSharpTask1.ViewModels
 
             try
             {
-                _personData = new Person(Name, Surname, Email, BirthDate);
+                Person tmpPerson = new Person(Name, Surname, Email, BirthDate);
 
-                await _personData.CalculatePropertiesAsync();
+                await tmpPerson.CalculatePropertiesAsync();
+
+                _personData = tmpPerson;
                 ResultText = _personData.ToString();
 
                 if (_personData.IsBirthday)
@@ -110,6 +138,11 @@ namespace CSharpTask1.ViewModels
                     MessageBox.Show("Happy birthday!", "Congratulation", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
 
+                if (_linked_window != null)
+                {
+                    _linked_window.DialogResult = true;
+                    _linked_window.Close();
+                }
             }
             catch (NotBornException ex)
             {
